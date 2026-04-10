@@ -83,7 +83,7 @@ const stages = [
   },
 ];
 
-// ─── Single Info Card ─────────────────────────────────────────────────────────
+// ─── Info Card ────────────────────────────────────────────────────────────────
 function InfoCard({ data, compact = false }) {
   return (
     <div className={`glass-card rounded-xl ${compact ? "p-3" : "p-4"} w-full`}>
@@ -180,16 +180,16 @@ function InfoCard({ data, compact = false }) {
   );
 }
 
-// ─── Desktop side card with slide animation ────────────────────────────────────
+// ─── Animated side card wrapper ────────────────────────────────────────────────
 function SideCard({ data, side, stageKey }) {
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={stageKey + side}
-        initial={{ opacity: 0, x: side === "left" ? -30 : 30 }}
+        initial={{ opacity: 0, x: side === "left" ? -24 : 24 }}
         animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: side === "left" ? -20 : 20 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        exit={{ opacity: 0, x: side === "left" ? -16 : 16 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className="w-52 xl:w-60"
       >
         <InfoCard data={data} />
@@ -198,7 +198,7 @@ function SideCard({ data, side, stageKey }) {
   );
 }
 
-// ─── Center title ─────────────────────────────────────────────────────────────
+// ─── Center title overlay ─────────────────────────────────────────────────────
 function CenterTitle({ title, stageKey }) {
   return (
     <AnimatePresence mode="wait">
@@ -207,35 +207,16 @@ function CenterTitle({ title, stageKey }) {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="flex flex-col items-center pointer-events-none"
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col items-center pointer-events-none text-center px-4"
       >
         <div className="w-6 h-[2px] bg-red-500 mx-auto mb-3" />
         <h2
-          className="text-2xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.9)] leading-tight tracking-tight text-center px-4"
+          className="text-2xl sm:text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-[0_2px_30px_rgba(0,0,0,0.95)]"
           style={{ fontFamily: "var(--font-hind)" }}
         >
           {title}
         </h2>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-// ─── Mobile bottom card strip ─────────────────────────────────────────────────
-function MobileCards({ stage }) {
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={stage.title}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.4 }}
-        className="grid grid-cols-2 gap-2 px-3 pb-3"
-      >
-        <InfoCard data={stage.left} compact />
-        <InfoCard data={stage.right} compact />
       </motion.div>
     </AnimatePresence>
   );
@@ -257,7 +238,7 @@ export default function CanvasScrollSequence() {
 
   const frameIndex = useTransform(scrollYProgress, [0, 1], [1, FRAME_COUNT]);
 
-  // Track active stage
+  // Track which stage is active
   useEffect(() => {
     return scrollYProgress.on("change", (v) => {
       const idx = stages.findIndex((s) => v >= s.range[0] && v < s.range[1]);
@@ -265,7 +246,7 @@ export default function CanvasScrollSequence() {
     });
   }, [scrollYProgress]);
 
-  // Preload frames
+  // Preload all frames
   useEffect(() => {
     const images = [];
     let count = 0;
@@ -282,22 +263,19 @@ export default function CanvasScrollSequence() {
     setImagesArray(images);
   }, []);
 
-  // Canvas paint
-  const paint = useCallback(
-    (val, canvas, ctx, imgs) => {
-      const idx = Math.min(Math.max(Math.floor(val) - 1, 0), FRAME_COUNT - 1);
-      const img = imgs[idx];
-      if (!img || !ctx) return;
-      const hr = canvas.width / img.width;
-      const vr = canvas.height / img.height;
-      const r  = Math.max(hr, vr);
-      const cx = (canvas.width  - img.width  * r) / 2;
-      const cy = (canvas.height - img.height * r) / 2;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, img.width, img.height, cx, cy, img.width * r, img.height * r);
-    },
-    []
-  );
+  // RAF canvas paint — uses the ONE canvas ref for all screen sizes
+  const paint = useCallback((val, canvas, ctx, imgs) => {
+    const idx = Math.min(Math.max(Math.floor(val) - 1, 0), FRAME_COUNT - 1);
+    const img = imgs[idx];
+    if (!img || !ctx) return;
+    const hr = canvas.width / img.width;
+    const vr = canvas.height / img.height;
+    const r  = Math.max(hr, vr);
+    const cx = (canvas.width  - img.width  * r) / 2;
+    const cy = (canvas.height - img.height * r) / 2;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, img.width, img.height, cx, cy, img.width * r, img.height * r);
+  }, []);
 
   useEffect(() => {
     if (!loaded || !canvasRef.current) return;
@@ -305,15 +283,15 @@ export default function CanvasScrollSequence() {
     const ctx = canvas.getContext("2d");
     let animId;
 
-    const resize = () => {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+    const syncSize = () => {
+      // Use logical CSS pixels — no DPR scaling, keeps drawing math simple & centered
+      canvas.width  = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
       paint(frameIndex.get(), canvas, ctx, imagesArray);
     };
 
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
+    syncSize();
+    window.addEventListener("resize", syncSize);
 
     const unsub = frameIndex.on("change", (val) => {
       cancelAnimationFrame(animId);
@@ -323,15 +301,17 @@ export default function CanvasScrollSequence() {
     return () => {
       unsub();
       cancelAnimationFrame(animId);
-      ro.disconnect();
+      window.removeEventListener("resize", syncSize);
     };
   }, [loaded, frameIndex, imagesArray, paint]);
 
   const stage = stages[activeStage];
 
   return (
-    <section ref={containerRef} className="relative h-[300vh] bg-[#fafafa]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col">
+    <section ref={containerRef} className="relative h-[300vh]">
+
+      {/* ── Single sticky viewport — one canvas for ALL screen sizes ── */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#050505]">
 
         {/* ── Loading overlay ── */}
         {!loaded && (
@@ -348,62 +328,59 @@ export default function CanvasScrollSequence() {
                 style={{ width: `${loadProgress}%` }}
               />
             </div>
-            <p className="mt-2 text-red-600 text-xs">{loadProgress}%</p>
+            <p className="mt-2 text-red-600 text-xs font-medium">{loadProgress}%</p>
           </div>
         )}
 
-        {/* ── DESKTOP layout: [LEFT CARD] [CANVAS] [RIGHT CARD] ── */}
-        <div className="hidden md:flex flex-1 items-center gap-3 px-4 xl:px-8 relative">
-          {/* Left card */}
-          {loaded && (
-            <div className="flex-shrink-0 z-20">
-              <SideCard data={stage.left} side="left" stageKey={activeStage} />
-            </div>
-          )}
+        {/* ── THE single canvas — absolutely fills the container ── */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full block"
+          style={{ objectFit: "cover" }}
+        />
 
-          {/* Canvas container */}
-          <div className="relative flex-1 h-full">
-            <canvas ref={canvasRef} className="w-full h-full block" />
-            {/* Vignette */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_50%,transparent_30%,rgba(10,10,10,0.5)_100%)] pointer-events-none" />
-            {/* Center title */}
-            {loaded && (
-              <div className="absolute inset-x-0 bottom-[15%] flex justify-center z-20">
-                <CenterTitle title={stage.title} stageKey={activeStage} />
-              </div>
-            )}
+        {/* Vignette for readability */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_50%,transparent_25%,rgba(5,5,5,0.6)_100%)] pointer-events-none" />
+
+        {/* ── Desktop: Left card — shown md+ ── */}
+        {loaded && (
+          <div className="hidden md:flex absolute left-5 xl:left-10 top-1/2 -translate-y-1/2 z-20">
+            <SideCard data={stage.left} side="left" stageKey={activeStage} />
           </div>
+        )}
 
-          {/* Right card */}
-          {loaded && (
-            <div className="flex-shrink-0 z-20">
-              <SideCard data={stage.right} side="right" stageKey={activeStage} />
-            </div>
-          )}
-        </div>
-
-        {/* ── MOBILE layout: canvas top, cards bottom ── */}
-        <div className="flex md:hidden flex-col flex-1">
-          {/* Canvas — takes remaining space above cards */}
-          <div className="relative flex-1 min-h-0">
-            <canvas ref={canvasRef} className="w-full h-full block" />
-            {/* Vignette */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_25%,rgba(10,10,10,0.55)_100%)] pointer-events-none" />
-            {/* Center title on canvas */}
-            {loaded && (
-              <div className="absolute inset-0 flex items-center justify-center z-10 px-4">
-                <CenterTitle title={stage.title} stageKey={activeStage} />
-              </div>
-            )}
+        {/* ── Desktop: Right card — shown md+ ── */}
+        {loaded && (
+          <div className="hidden md:flex absolute right-5 xl:right-10 top-1/2 -translate-y-1/2 z-20">
+            <SideCard data={stage.right} side="right" stageKey={activeStage} />
           </div>
+        )}
 
-          {/* Cards strip at the bottom — fixed height */}
-          {loaded && (
-            <div className="bg-[#fafafa]/95 backdrop-blur-sm border-t border-black/6 py-2 flex-shrink-0">
-              <MobileCards stage={stage} />
-            </div>
-          )}
-        </div>
+        {/* ── Center title — shown on ALL screen sizes ── */}
+        {loaded && (
+          <div className="absolute bottom-[22%] md:bottom-[15%] inset-x-0 flex justify-center z-20">
+            <CenterTitle title={stage.title} stageKey={activeStage} />
+          </div>
+        )}
+
+        {/* ── Mobile: compact card strip at bottom ── */}
+        {loaded && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeStage}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+              className="flex md:hidden absolute bottom-0 inset-x-0 z-20 bg-white/90 backdrop-blur-sm border-t border-black/8"
+            >
+              <div className="grid grid-cols-2 gap-2 p-3 w-full">
+                <InfoCard data={stage.left} compact />
+                <InfoCard data={stage.right} compact />
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        )}
 
       </div>
     </section>
