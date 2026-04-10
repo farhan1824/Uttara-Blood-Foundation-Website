@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# উত্তরা ব্লাড ফাউন্ডেশন — Uttara Blood Foundation Website
 
-## Getting Started
+> **"রক্তের অভাবে কেউ যেন মারা না যায়"** — এটাই আমাদের প্রতিশ্রুতি।
 
-First, run the development server:
+A high-end **Scrollytelling** landing page for Uttara Blood Foundation, built with Next.js 14, Framer Motion, and an HTML5 Canvas image sequence. As the user scrolls, a blood droplet disassembles into an explosion of blood groups — symbolizing the foundation's life-saving reach across Uttara, Dhaka.
 
+---
+
+## 🌐 Live Features
+
+- **240-frame Canvas Scroll Sequence** — butter-smooth blood drop animation tied to scroll position
+- **4-Stage Side Info Cards** — contextual left & right cards appear at each scroll stage
+- **Full Bengali (Bangla) Language** — entire UI in বাংলা with Hind Siliguri font
+- **Sticky Navbar** — transparent → white on scroll, mobile hamburger drawer
+- **White Theme** — clean `#FAFAFA` background with crimson red accents
+- **Dark Footer** — intentional dark anchor with pulsing red CTA
+- **Mobile Responsive** — side cards stack below canvas on smaller screens
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Language | JavaScript (React) |
+| Styling | Tailwind CSS |
+| Animation | Framer Motion |
+| Canvas Rendering | HTML5 Canvas + `requestAnimationFrame` |
+| Font | Hind Siliguri (Bengali), Geist Sans |
+
+---
+
+## 🚀 Getting Started on a New Device
+
+### Prerequisites
+Make sure the device has **Node.js (v18+)** and **Git** installed.
+- Download Node.js: https://nodejs.org
+- Download Git: https://git-scm.com
+
+### Step 1 — Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/farhan1824/Uttara-Blood-Foundation-Website.git
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Step 2 — Move into the project folder
+```bash
+cd Uttara-Blood-Foundation-Website
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Step 3 — Install dependencies
+```bash
+npm install
+```
+> `node_modules` is excluded from Git via `.gitignore`. This command rebuilds it from `package.json`.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Step 4 — Start the development server
+```bash
+npm run dev
+```
 
-## Learn More
+Then open **http://localhost:3000** in your browser. ✅
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📦 Production Build (Optional)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```bash
+npm run build    # Build optimized production output
+npm run start    # Serve the production build locally
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔄 Pushing Future Updates
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```bash
+git add .
+git commit -m "your commit message"
+git push
+```
+
+---
+
+## 📁 Project Structure
+
+```
+Uttara-Blood-Foundation-Website/
+├── public/
+│   └── sequence/          # 240 blood drop animation frames (ezgif-frame-001.jpg … 240.jpg)
+├── src/
+│   ├── app/
+│   │   ├── globals.css    # Global styles, white theme, animations
+│   │   ├── layout.js      # Root layout, Bengali font, metadata
+│   │   └── page.js        # Page assembly
+│   └── components/
+│       ├── Navbar.jsx             # Sticky navbar with mobile drawer
+│       ├── Hero.jsx               # Hero section with tagline and CTAs
+│       ├── CanvasScrollSequence.jsx  # Core canvas scroll + side cards
+│       ├── Mission.jsx            # About, stats, events, vision
+│       └── Footer.jsx             # Dark footer with CTA
+├── .gitignore
+├── next.config.mjs
+├── package.json
+└── tailwind.config.js
+```
+
+---
+
+## 📞 Contact
+
+| Channel | Details |
+|---|---|
+| 📧 Email | contact1.ubf@gmail.com |
+| 📞 Phone | 01707509461 / 01633032605 |
+| 📘 Facebook | [facebook.com/uttarabloodfoundation](https://www.facebook.com/uttarabloodfoundation) |
+| 📍 Address | উত্তরা মডেল টাউন, ঢাকা |
+
+---
+
+© 2026 Uttara Blood Foundation. All Rights Reserved.
