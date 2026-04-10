@@ -24,9 +24,10 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="bn" className="scroll-smooth">
+    <html lang="bn" className="scroll-smooth" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${hindSiliguri.variable} font-sans antialiased bg-[#fafafa] text-[#0a0a0a]`}
+        suppressHydrationWarning
       >
         {children}
       </body>

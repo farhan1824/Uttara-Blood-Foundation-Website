@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useScroll, useTransform, motion, AnimatePresence } from "framer-motion";
 
 const FRAME_COUNT = 240;
@@ -9,7 +9,6 @@ function currentFrame(index) {
   return `/sequence/ezgif-frame-${index.toString().padStart(3, "0")}.jpg`;
 }
 
-// ─── Stage Data: 4 scroll stages, each with left card, right card, center title ───
 const stages = [
   {
     range: [0, 0.25],
@@ -17,13 +16,12 @@ const stages = [
     left: {
       icon: "💧",
       heading: "জানেন কি?",
-      body: "এক ইউনিট রক্ত তিনজন রোগীর জীবন বাঁচাতে পারে। একটি ছোট্ট সিদ্ধান্ত — তিনটি নতুন জীবন।",
+      body: "এক ইউনিট রক্ত তিনজন রোগীর জীবন বাঁচাতে পারে।",
       tag: "তথ্য",
     },
     right: {
       icon: "🩸",
       heading: "রক্তের গ্রুপ",
-      body: null,
       groups: ["A+", "A−", "B+", "B−", "O+", "O−", "AB+", "AB−"],
       tag: "সব গ্রুপ চাই",
     },
@@ -34,17 +32,16 @@ const stages = [
     left: {
       icon: "❤️",
       heading: "আপনার অবদান",
-      body: "মাত্র ১৭ মিনিট সময় দিন। একজন ডোনার প্রতি তিন মাস অন্তর রক্ত দিতে পারেন — বছরে চারবার।",
+      body: "মাত্র ১৭ মিনিট — বছরে চারবার রক্ত দিন।",
       tag: "অনুপ্রেরণা",
     },
     right: {
       icon: "📊",
       heading: "আমাদের অর্জন",
-      body: null,
       stats: [
         { val: "২০০+", label: "ব্যাগ রক্ত" },
-        { val: "১০০০+", label: "সক্রিয় ডোনার" },
-        { val: "২টি", label: "সফল ক্যাম্পেইন" },
+        { val: "১০০০+", label: "ডোনার" },
+        { val: "২টি", label: "ক্যাম্পেইন" },
       ],
       tag: "পরিসংখ্যান",
     },
@@ -55,19 +52,13 @@ const stages = [
     left: {
       icon: "🏥",
       heading: "আমাদের নেটওয়ার্ক",
-      body: "ঢাকাজুড়ে ৬টি সেক্টরে সক্রিয় সদস্য। প্রতিটি হাসপাতালে নিশ্চিত রক্তের সরবরাহ আমাদের লক্ষ্য।",
-      tag: "বিস্তার পরিকল্পনা",
+      body: "ঢাকাজুড়ে ৬টি সেক্টরে সক্রিয় সদস্য।",
+      tag: "বিস্তার",
     },
     right: {
       icon: "🗺️",
-      heading: "ভবিষ্যৎ পরিকল্পনা",
-      body: null,
-      bullets: [
-        "দেশব্যাপী ডোনার নেটওয়ার্ক",
-        "ডিজিটাল ডোনার ডেটাবেস",
-        "জরুরি হটলাইন সেবা",
-        "জাতীয় ব্লাড ব্যাংক সিস্টেম",
-      ],
+      heading: "পরিকল্পনা",
+      bullets: ["দেশব্যাপী ডোনার নেটওয়ার্ক", "ডিজিটাল ডেটাবেস", "জরুরি হটলাইন"],
       tag: "রোডম্যাপ",
     },
   },
@@ -76,179 +67,181 @@ const stages = [
     title: "প্রতিটি গ্রুপই গুরুত্বপূর্ণ।",
     left: {
       icon: "✅",
-      heading: "কেন UBF বেছে নেবেন?",
-      body: null,
-      bullets: [
-        "যাচাইকৃত ও সক্রিয় ডোনার",
-        "জরুরি প্রতিক্রিয়া দল",
-        "সম্প্রদায়ভিত্তিক পদ্ধতি",
-      ],
+      heading: "কেন UBF?",
+      bullets: ["যাচাইকৃত ডোনার", "জরুরি প্রতিক্রিয়া দল", "সম্প্রদায়ভিত্তিক"],
       tag: "আমাদের প্রতিশ্রুতি",
     },
     right: {
       icon: "📞",
-      heading: "এখনই যোগাযোগ করুন",
-      body: null,
+      heading: "যোগাযোগ",
       contacts: [
         { label: "ফোন", val: "01707509461" },
-        { label: "হোয়াটসঅ্যাপ", val: "01633032605" },
         { label: "ইমেইল", val: "contact1.ubf@gmail.com" },
       ],
-      tag: "জরুরি যোগাযোগ",
+      tag: "জরুরি",
     },
   },
 ];
 
-// ─── Individual Card Components ───────────────────────────────────────────────
-function InfoCard({ data, side, visible }) {
-  const variants = {
-    hidden:  { opacity: 0, x: side === "left" ? -40 : 40, scale: 0.95 },
-    visible: { opacity: 1, x: 0, scale: 1,
-      transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-    exit:    { opacity: 0, x: side === "left" ? -30 : 30, scale: 0.95,
-      transition: { duration: 0.35 } },
-  };
+// ─── Single Info Card ─────────────────────────────────────────────────────────
+function InfoCard({ data, compact = false }) {
+  return (
+    <div className={`glass-card rounded-xl ${compact ? "p-3" : "p-4"} w-full`}>
+      <span
+        className="inline-block px-2 py-0.5 text-[9px] bg-red-50 text-red-600 rounded-full border border-red-100 tracking-wide mb-2"
+        style={{ fontFamily: "var(--font-hind)" }}
+      >
+        {data.tag}
+      </span>
 
+      <div className="flex items-center gap-2 mb-2">
+        <span className={compact ? "text-base" : "text-lg"}>{data.icon}</span>
+        <h3
+          className={`font-semibold ${compact ? "text-xs" : "text-sm"} text-[#0a0a0a] leading-snug`}
+          style={{ fontFamily: "var(--font-hind)" }}
+        >
+          {data.heading}
+        </h3>
+      </div>
+
+      {data.body && (
+        <p
+          className={`text-[#0a0a0a]/60 ${compact ? "text-[10px]" : "text-xs"} leading-relaxed`}
+          style={{ fontFamily: "var(--font-hind)" }}
+        >
+          {data.body}
+        </p>
+      )}
+
+      {data.groups && (
+        <div className="grid grid-cols-4 gap-1">
+          {data.groups.map((g) => (
+            <span
+              key={g}
+              className={`flex items-center justify-center ${compact ? "h-6 text-[9px]" : "h-7 text-[10px]"} rounded-md bg-red-600 text-white font-bold`}
+            >
+              {g}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {data.stats && (
+        <div className="space-y-1.5">
+          {data.stats.map((s) => (
+            <div key={s.label} className="flex justify-between items-center">
+              <span
+                className="text-[10px] text-[#0a0a0a]/50"
+                style={{ fontFamily: "var(--font-hind)" }}
+              >
+                {s.label}
+              </span>
+              <span className={`${compact ? "text-xs" : "text-sm"} font-bold text-red-600`}>
+                {s.val}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.bullets && (
+        <ul className="space-y-1">
+          {data.bullets.map((b) => (
+            <li
+              key={b}
+              className={`flex items-start gap-1.5 ${compact ? "text-[10px]" : "text-xs"} text-[#0a0a0a]/60`}
+              style={{ fontFamily: "var(--font-hind)" }}
+            >
+              <span className="text-red-500 mt-0.5 flex-shrink-0 text-[8px]">◆</span>
+              {b}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {data.contacts && (
+        <div className="space-y-1.5">
+          {data.contacts.map((c) => (
+            <div key={c.label}>
+              <p
+                className="text-[9px] text-[#0a0a0a]/40 uppercase tracking-widest"
+                style={{ fontFamily: "var(--font-hind)" }}
+              >
+                {c.label}
+              </p>
+              <p className={`${compact ? "text-[10px]" : "text-xs"} font-medium text-[#0a0a0a] break-all`}>
+                {c.val}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Desktop side card with slide animation ────────────────────────────────────
+function SideCard({ data, side, stageKey }) {
   return (
     <AnimatePresence mode="wait">
-      {visible && (
-        <motion.div
-          key={data.heading}
-          variants={variants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          className="glass-card rounded-2xl p-5 w-full max-w-[220px]"
-        >
-          {/* Tag */}
-          <span
-            className="inline-block px-2 py-0.5 text-[10px] bg-red-50 text-red-600 rounded-full border border-red-100 tracking-wide mb-3"
-            style={{ fontFamily: "var(--font-hind)" }}
-          >
-            {data.tag}
-          </span>
-
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">{data.icon}</span>
-            <h3
-              className="font-semibold text-sm text-[#0a0a0a] leading-snug"
-              style={{ fontFamily: "var(--font-hind)" }}
-            >
-              {data.heading}
-            </h3>
-          </div>
-
-          {/* Text body */}
-          {data.body && (
-            <p
-              className="text-[#0a0a0a]/60 text-xs leading-relaxed"
-              style={{ fontFamily: "var(--font-hind)" }}
-            >
-              {data.body}
-            </p>
-          )}
-
-          {/* Blood groups grid */}
-          {data.groups && (
-            <div className="grid grid-cols-4 gap-1.5">
-              {data.groups.map((g) => (
-                <span
-                  key={g}
-                  className="flex items-center justify-center h-8 rounded-lg bg-red-600 text-white text-xs font-bold"
-                >
-                  {g}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Stats */}
-          {data.stats && (
-            <div className="space-y-2 mt-1">
-              {data.stats.map((s) => (
-                <div key={s.label} className="flex justify-between items-center">
-                  <span
-                    className="text-xs text-[#0a0a0a]/55"
-                    style={{ fontFamily: "var(--font-hind)" }}
-                  >
-                    {s.label}
-                  </span>
-                  <span className="text-sm font-bold text-red-600">{s.val}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Bullet list */}
-          {data.bullets && (
-            <ul className="space-y-1.5 mt-1">
-              {data.bullets.map((b) => (
-                <li
-                  key={b}
-                  className="flex items-start gap-2 text-xs text-[#0a0a0a]/60"
-                  style={{ fontFamily: "var(--font-hind)" }}
-                >
-                  <span className="text-red-500 mt-0.5 flex-shrink-0">◆</span>
-                  {b}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Contacts */}
-          {data.contacts && (
-            <div className="space-y-2 mt-1">
-              {data.contacts.map((c) => (
-                <div key={c.label}>
-                  <p
-                    className="text-[9px] text-[#0a0a0a]/40 uppercase tracking-widest"
-                    style={{ fontFamily: "var(--font-hind)" }}
-                  >
-                    {c.label}
-                  </p>
-                  <p className="text-xs font-medium text-[#0a0a0a]">{c.val}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </motion.div>
-      )}
+      <motion.div
+        key={stageKey + side}
+        initial={{ opacity: 0, x: side === "left" ? -30 : 30 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: side === "left" ? -20 : 20 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="w-52 xl:w-60"
+      >
+        <InfoCard data={data} />
+      </motion.div>
     </AnimatePresence>
   );
 }
 
-// ─── Center title overlay ─────────────────────────────────────────────────────
-function CenterTitle({ stage, visible }) {
-  const variants = {
-    hidden:  { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22,1,0.36,1] } },
-    exit:    { opacity: 0, y: -16, transition: { duration: 0.3 } },
-  };
+// ─── Center title ─────────────────────────────────────────────────────────────
+function CenterTitle({ title, stageKey }) {
   return (
     <AnimatePresence mode="wait">
-      {visible && (
-        <motion.div
-          key={stage.title}
-          variants={variants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          className="absolute bottom-[10%] inset-x-0 flex flex-col items-center pointer-events-none px-4 z-20"
+      <motion.div
+        key={stageKey}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col items-center pointer-events-none"
+      >
+        <div className="w-6 h-[2px] bg-red-500 mx-auto mb-3" />
+        <h2
+          className="text-2xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.9)] leading-tight tracking-tight text-center px-4"
+          style={{ fontFamily: "var(--font-hind)" }}
         >
-          <div className="w-8 h-[2px] bg-red-600 mx-auto mb-3" />
-          <h2
-            className="text-3xl md:text-5xl font-bold text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.85)] leading-tight tracking-tight text-center"
-            style={{ fontFamily: "var(--font-hind)" }}
-          >
-            {stage.title}
-          </h2>
-        </motion.div>
-      )}
+          {title}
+        </h2>
+      </motion.div>
     </AnimatePresence>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Mobile bottom card strip ─────────────────────────────────────────────────
+function MobileCards({ stage }) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={stage.title}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4 }}
+        className="grid grid-cols-2 gap-2 px-3 pb-3"
+      >
+        <InfoCard data={stage.left} compact />
+        <InfoCard data={stage.right} compact />
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 export default function CanvasScrollSequence() {
   const canvasRef    = useRef(null);
   const containerRef = useRef(null);
@@ -264,49 +257,36 @@ export default function CanvasScrollSequence() {
 
   const frameIndex = useTransform(scrollYProgress, [0, 1], [1, FRAME_COUNT]);
 
-  // Track which stage is active based on scroll
+  // Track active stage
   useEffect(() => {
     return scrollYProgress.on("change", (v) => {
-      const idx = stages.findIndex(
-        (s) => v >= s.range[0] && v < s.range[1]
-      );
+      const idx = stages.findIndex((s) => v >= s.range[0] && v < s.range[1]);
       setActiveStage(idx === -1 ? stages.length - 1 : idx);
     });
   }, [scrollYProgress]);
 
-  // Preload all frames
+  // Preload frames
   useEffect(() => {
     const images = [];
-    let loadedImages = 0;
+    let count = 0;
     for (let i = 1; i <= FRAME_COUNT; i++) {
       const img = new Image();
       img.src = currentFrame(i);
       img.onload = () => {
-        loadedImages++;
-        setLoadProgress(Math.floor((loadedImages / FRAME_COUNT) * 100));
-        if (loadedImages === FRAME_COUNT) setLoaded(true);
+        count++;
+        setLoadProgress(Math.floor((count / FRAME_COUNT) * 100));
+        if (count === FRAME_COUNT) setLoaded(true);
       };
       images.push(img);
     }
     setImagesArray(images);
   }, []);
 
-  // RAF canvas rendering
-  useEffect(() => {
-    if (!loaded || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    let animId;
-
-    const resize = () => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-      paint(frameIndex.get());
-    };
-
-    const paint = (val) => {
+  // Canvas paint
+  const paint = useCallback(
+    (val, canvas, ctx, imgs) => {
       const idx = Math.min(Math.max(Math.floor(val) - 1, 0), FRAME_COUNT - 1);
-      const img = imagesArray[idx];
+      const img = imgs[idx];
       if (!img || !ctx) return;
       const hr = canvas.width / img.width;
       const vr = canvas.height / img.height;
@@ -315,84 +295,116 @@ export default function CanvasScrollSequence() {
       const cy = (canvas.height - img.height * r) / 2;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, img.width, img.height, cx, cy, img.width * r, img.height * r);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!loaded || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    let animId;
+
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      paint(frameIndex.get(), canvas, ctx, imagesArray);
     };
 
     resize();
-    window.addEventListener("resize", resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
 
     const unsub = frameIndex.on("change", (val) => {
       cancelAnimationFrame(animId);
-      animId = requestAnimationFrame(() => paint(val));
+      animId = requestAnimationFrame(() => paint(val, canvas, ctx, imagesArray));
     });
 
     return () => {
       unsub();
       cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
+      ro.disconnect();
     };
-  }, [loaded, frameIndex, imagesArray]);
+  }, [loaded, frameIndex, imagesArray, paint]);
 
   const stage = stages[activeStage];
 
   return (
     <section ref={containerRef} className="relative h-[300vh] bg-[#fafafa]">
-      {/* ── Sticky viewport ── */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col">
 
-        {/* Loading overlay */}
+        {/* ── Loading overlay ── */}
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-[#fafafa]">
             <p
               className="text-[#0a0a0a]/40 uppercase tracking-[0.3em] text-xs mb-5"
               style={{ fontFamily: "var(--font-hind)" }}
             >
-              অ্যানিমেশন লোড হচ্ছে
+              লোড হচ্ছে
             </p>
-            <div className="w-48 h-[2px] bg-[#0a0a0a]/10 rounded-full overflow-hidden">
+            <div className="w-40 h-[2px] bg-[#0a0a0a]/10 rounded-full overflow-hidden">
               <div
                 className="h-full bg-red-600 transition-all duration-150 rounded-full"
                 style={{ width: `${loadProgress}%` }}
               />
             </div>
-            <p className="mt-3 text-red-600 text-xs font-medium">{loadProgress}%</p>
+            <p className="mt-2 text-red-600 text-xs">{loadProgress}%</p>
           </div>
         )}
 
-        {/* Canvas */}
-        <canvas ref={canvasRef} className="block w-full h-full" />
-
-        {/* Vignette for text legibility */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_65%_65%_at_50%_50%,transparent_35%,rgba(10,10,10,0.55)_100%)] pointer-events-none" />
-
-        {/* ── DESKTOP: Left & Right cards ── */}
-        {loaded && (
-          <>
-            {/* Left card */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-4 xl:left-10 hidden md:flex z-30">
-              <InfoCard data={stage.left} side="left" visible={true} />
+        {/* ── DESKTOP layout: [LEFT CARD] [CANVAS] [RIGHT CARD] ── */}
+        <div className="hidden md:flex flex-1 items-center gap-3 px-4 xl:px-8 relative">
+          {/* Left card */}
+          {loaded && (
+            <div className="flex-shrink-0 z-20">
+              <SideCard data={stage.left} side="left" stageKey={activeStage} />
             </div>
+          )}
 
-            {/* Right card */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-4 xl:right-10 hidden md:flex z-30">
-              <InfoCard data={stage.right} side="right" visible={true} />
-            </div>
-          </>
-        )}
-
-        {/* Center title */}
-        {loaded && <CenterTitle stage={stage} visible={true} />}
-
-        {/* ── MOBILE: Cards stacked below title ── */}
-        {loaded && (
-          <div className="absolute bottom-4 inset-x-0 flex md:hidden justify-center gap-3 px-4 z-30 pb-2">
-            <div className="w-[48%]">
-              <InfoCard data={stage.left} side="left" visible={true} />
-            </div>
-            <div className="w-[48%]">
-              <InfoCard data={stage.right} side="right" visible={true} />
-            </div>
+          {/* Canvas container */}
+          <div className="relative flex-1 h-full">
+            <canvas ref={canvasRef} className="w-full h-full block" />
+            {/* Vignette */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_50%,transparent_30%,rgba(10,10,10,0.5)_100%)] pointer-events-none" />
+            {/* Center title */}
+            {loaded && (
+              <div className="absolute inset-x-0 bottom-[15%] flex justify-center z-20">
+                <CenterTitle title={stage.title} stageKey={activeStage} />
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right card */}
+          {loaded && (
+            <div className="flex-shrink-0 z-20">
+              <SideCard data={stage.right} side="right" stageKey={activeStage} />
+            </div>
+          )}
+        </div>
+
+        {/* ── MOBILE layout: canvas top, cards bottom ── */}
+        <div className="flex md:hidden flex-col flex-1">
+          {/* Canvas — takes remaining space above cards */}
+          <div className="relative flex-1 min-h-0">
+            <canvas ref={canvasRef} className="w-full h-full block" />
+            {/* Vignette */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_25%,rgba(10,10,10,0.55)_100%)] pointer-events-none" />
+            {/* Center title on canvas */}
+            {loaded && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 px-4">
+                <CenterTitle title={stage.title} stageKey={activeStage} />
+              </div>
+            )}
+          </div>
+
+          {/* Cards strip at the bottom — fixed height */}
+          {loaded && (
+            <div className="bg-[#fafafa]/95 backdrop-blur-sm border-t border-black/6 py-2 flex-shrink-0">
+              <MobileCards stage={stage} />
+            </div>
+          )}
+        </div>
+
       </div>
     </section>
   );

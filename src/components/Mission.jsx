@@ -81,7 +81,7 @@ export default function Mission() {
     <section id="about" className="w-full bg-[#fafafa] text-[#0a0a0a]">
 
       {/* ── About ── */}
-      <div className="relative py-28 px-6 md:px-12 lg:px-24 border-t border-black/8">
+      <div className="relative py-16 sm:py-28 px-5 md:px-12 lg:px-24 border-t border-black/8">
         <div className="max-w-5xl mx-auto">
           <motion.div {...fadeIn(0)}>
             <SectionLabel>আমাদের সম্পর্কে — ২৭ এপ্রিল ২০২৪</SectionLabel>
@@ -106,7 +106,7 @@ export default function Mission() {
 
           {/* Stats */}
           <motion.div {...fadeIn(0.2)}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
           >
             {[
               { val: "২০০+",    label: "রক্তের ব্যাগ দান" },
@@ -137,10 +137,10 @@ export default function Mission() {
       </div>
 
       {/* ── Quotes from PDF ── */}
-      <div id="activities" className="py-20 px-6 md:px-12 lg:px-24 bg-[#f5f5f5]">
+      <div id="activities" className="py-14 sm:py-20 px-5 md:px-12 lg:px-24 bg-[#f5f5f5]">
         <div className="max-w-5xl mx-auto">
           <SectionLabel>UBF পোর্টফোলিও থেকে</SectionLabel>
-          <div className="grid md:grid-cols-3 gap-5 mt-2">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
             {quotes.map((q, i) => (
               <motion.blockquote
                 key={i}
@@ -169,7 +169,7 @@ export default function Mission() {
       </div>
 
       {/* ── Past Events ── */}
-      <div id="events" className="py-24 px-6 md:px-12 lg:px-24 border-t border-black/8">
+      <div id="events" className="py-16 sm:py-24 px-5 md:px-12 lg:px-24 border-t border-black/8">
         <div className="max-w-5xl mx-auto">
           <SectionLabel>আমাদের গল্প</SectionLabel>
           <h3
@@ -218,8 +218,8 @@ export default function Mission() {
       </div>
 
       {/* ── Vision & Upcoming ── */}
-      <div className="py-24 px-6 md:px-12 lg:px-24 bg-[#f5f5f5] border-t border-black/8">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-14">
+      <div className="py-16 sm:py-24 px-5 md:px-12 lg:px-24 bg-[#f5f5f5] border-t border-black/8">
+        <div className="max-w-5xl mx-auto grid sm:grid-cols-2 gap-10 sm:gap-14">
           {/* Vision */}
           <motion.div {...fadeIn(0)}>
             <SectionLabel>আমাদের দর্শন</SectionLabel>
@@ -271,7 +271,7 @@ export default function Mission() {
       </div>
 
       {/* ── Partners ── */}
-      <div className="py-14 px-6 md:px-12 lg:px-24 border-t border-black/8">
+      <div className="py-10 sm:py-14 px-5 md:px-12 lg:px-24 border-t border-black/8">
         <div className="max-w-5xl mx-auto">
           <SectionLabel>আমাদের সঙ্গী সংস্থাসমূহ</SectionLabel>
           <div className="flex flex-wrap gap-2.5 mt-3">
